@@ -1,37 +1,42 @@
 import 'package:TimeConvertor/api_keys.dart';
+import 'package:TimeConvertor/services/timezonedb_response.dart';
 import 'package:dio/dio.dart';
 
 final dio = Dio();
 
 class GetFromTimeZoneDB {
-  // static Future<int> getUTCOffsetByLocation(double longitude, double latitude) async {
-  //
-  // }
+  static Future<GetTimeZoneResponse> getTZDBResponseByPosition(double latitude, double longitude) async {
+    return requestTZDBWithAdditionalParams({
+      'by': 'position',
+      'lat' : latitude.toString(),
+      'lng' : longitude.toString(),
+    });
+   }
 
 
-  static Future<int> getUTCOffsetByZone(String zone) async {
+  static Future<GetTimeZoneResponse> getTZDBResponseByZone(String zone) async {
     if (zoneFixes.containsKey(zone)) {
       zone = zoneFixes[zone]!;
     }
 
-    return getUTCOffsetWithAddionalParams({
+    return requestTZDBWithAdditionalParams({
       'by': 'zone',
       'zone' : zone,
     });
   }
 
 
-  static Future<int> getUTCOffsetWithAddionalParams(Map<String, String> additionalParams) async {
-    return getUTCOffset({
+  static Future<GetTimeZoneResponse> requestTZDBWithAdditionalParams(Map<String, String> additionalParams) async {
+    return requestTZDB({
       'key': APIKeys.timeZoneDBAPI,
       'format': 'json',
       ...additionalParams
     });
   }
 
-  static Future<int> getUTCOffset(Map<String, String> queryParams) async {
+  static Future<GetTimeZoneResponse> requestTZDB(Map<String, String> queryParams) async {
 
-    int offset = 0;
+    GetTimeZoneResponse? apiResponse;
 
     while(true) {
       try {
@@ -41,7 +46,7 @@ class GetFromTimeZoneDB {
 
         var responseMap = response.data as Map<String, dynamic>;
 
-        offset = responseMap['gmtOffset']; //if status is 400, it'll throw
+        apiResponse = GetTimeZoneResponse.fromJson(responseMap);
         break;
 
       } on DioError catch (e) {
@@ -58,7 +63,7 @@ class GetFromTimeZoneDB {
           case DioErrorType.unknown:
           //just retry
             await Future.delayed(const Duration(seconds: 2));
-            getUTCOffset(queryParams);
+            requestTZDB(queryParams);
             break;
 
           default:
@@ -66,26 +71,8 @@ class GetFromTimeZoneDB {
         }
       }
     }
-    return offset;
+    return apiResponse;
   }
-
-  /*
-  "status": "OK",
-    "message": "",
-    "countryCode": "US",
-    "countryName": "United States",
-    "regionName": "",
-    "cityName": "",
-    "zoneName": "America\/Chicago",
-    "abbreviation": "CST",
-    "gmtOffset": -21600,
-    "dst": "0",
-    "zoneStart": 1667718000,
-    "zoneEnd": 1678607999,
-    "nextAbbreviation": "CDT",
-    "timestamp": 1676620441,
-    "formatted": "2023-02-17 07:54:01"
-   */
 
   //for some reason timezonedb has these with 3 names idk why
   static final Map<String, String> zoneFixes = {

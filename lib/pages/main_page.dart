@@ -63,7 +63,7 @@ class _MainPageState extends State<MainPage> {
 
   void updateLocalUTCOffset() async{
     String zone = await GetLocalTimeZone.get();
-    int offset = await GetFromTimeZoneDB.getUTCOffsetByZone(zone);
+    int offset = (await GetFromTimeZoneDB.getTZDBResponseByZone(zone)).gmtOffset;
 
     if (offset != localUtcOffset) {
       final prefs = await SharedPreferences.getInstance();

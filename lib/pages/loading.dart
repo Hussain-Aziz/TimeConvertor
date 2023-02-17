@@ -44,7 +44,7 @@ class _LoadingPageState extends State<LoadingPage> {
 
       changeLoadingText("Loading...\nGetting Local UTC Offset.\n\nPlease make sure you are connected to the internet");
 
-      offset = await GetFromTimeZoneDB.getUTCOffsetByZone(zone);
+      offset = (await GetFromTimeZoneDB.getTZDBResponseByZone(zone)).gmtOffset;
 
       prefs.setInt('localUTCOffset', offset);
 
@@ -108,9 +108,7 @@ class _LoadingPageState extends State<LoadingPage> {
       'offset': localUtcOffset,
       'reCheckTimeZone' : reCheckTimeZone,
     };
-
-    removeSplashScreen();
-
     Navigator.pushReplacementNamed(context, "/main", arguments: args);
+    removeSplashScreen();
   }
 }
