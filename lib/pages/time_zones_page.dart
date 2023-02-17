@@ -80,7 +80,11 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
 
   Widget buildTimeZonePages(int index, double? height) {
     return Stack(
-      children: [Text("HI")],
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 10),
+          ),
+        ]
     );
   }
 }
