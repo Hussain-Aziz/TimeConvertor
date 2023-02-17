@@ -1,10 +1,9 @@
-import 'dart:io';
 import 'package:TimeConvertor/services/get_from_timezonedb.dart';
 import 'package:TimeConvertor/services/get_local_timezone.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoadingPage extends StatefulWidget {
   const LoadingPage({Key? key}) : super(key: key);
@@ -22,27 +21,55 @@ class _LoadingPageState extends State<LoadingPage> {
   }
   String loadingText = "Loading...";
   bool isError = false;
+  bool splashRemoved = false;
 
   void getLocalTimeZone() async {
     try {
-      setState(() {
-        loadingText = "Loading...\nGetting Local Timezone";
+
+      final prefs = await SharedPreferences.getInstance();
+
+      int? offset = prefs.getInt('localUTCOffset');
+
+      if (offset != null)
+      {
+        return leave(offset, true);
+      }
+
+      // so error can be shown
+      Future.delayed(const Duration(seconds: 3), () {
+        removeSplashScreen();
       });
+
       String zone = await GetLocalTimeZone.get();
 
-      setState(() {
-        loadingText = "Loading...\nGetting Local UTC Offset";
-      });
+      changeLoadingText("Loading...\nGetting Local UTC Offset.\n\nPlease make sure you are connected to the internet");
 
-      int offset = await GetFromTimeZoneDB.getUTCOffset(zone);
+      offset = await GetFromTimeZoneDB.getUTCOffsetByZone(zone);
 
-      leave(offset);
+      prefs.setInt('localUTCOffset', offset);
+
+      return leave(offset, false);
 
     } catch (e){
-      setState(() {
-        isError = true;
-        loadingText = "Loading Error: \n${e.toString()}";
-      });
+      isError = true;
+      changeLoadingText("Loading...\nGetting Local UTC Offset.\n\nPlease make sure you are connected to the internet");
+      removeSplashScreen();
+    }
+  }
+
+  void changeLoadingText(String newText)
+  {
+    setState(() {
+      loadingText = newText;
+    });
+  }
+
+  void removeSplashScreen()
+  {
+    if (!splashRemoved)
+    {
+      splashRemoved = true;
+      FlutterNativeSplash.remove();
     }
   }
 
@@ -60,15 +87,15 @@ class _LoadingPageState extends State<LoadingPage> {
               child: Container(
                 margin: const EdgeInsets.symmetric(vertical: 40, horizontal: 10),
                 child: Text(loadingText,
-                overflow: TextOverflow.visible,
-                maxLines: 10,
-                style: TextStyle(
-                  fontWeight: FontWeight.normal,
-                  overflow: TextOverflow.visible,
-                  color: isError ? Colors.red[600] : Colors.blue[700],
-                  fontSize: 18,
-                  decoration: TextDecoration.none
-                )),
+                    overflow: TextOverflow.visible,
+                    maxLines: 10,
+                    style: TextStyle(
+                        fontWeight: FontWeight.normal,
+                        overflow: TextOverflow.visible,
+                        color: isError ? Colors.red[600] : Colors.blue[700],
+                        fontSize: 18,
+                        decoration: TextDecoration.none
+                    )),
               ),
             )
           ]
@@ -76,10 +103,14 @@ class _LoadingPageState extends State<LoadingPage> {
     );
   }
 
-  void leave(int localUtcOffset){
-    Map<String,int> args = {
-      'offset': localUtcOffset
+  void leave(int localUtcOffset, bool reCheckTimeZone){
+    Map<String,dynamic> args = {
+      'offset': localUtcOffset,
+      'reCheckTimeZone' : reCheckTimeZone,
     };
+
+    removeSplashScreen();
+
     Navigator.pushReplacementNamed(context, "/main", arguments: args);
   }
 }

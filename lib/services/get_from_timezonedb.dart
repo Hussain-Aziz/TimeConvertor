@@ -1,24 +1,37 @@
-import 'dart:io';
-
 import 'package:TimeConvertor/api_keys.dart';
 import 'package:dio/dio.dart';
-import 'dart:convert';
 
 final dio = Dio();
 
 class GetFromTimeZoneDB {
-  static Future<int> getUTCOffset(String zone) async {
+  // static Future<int> getUTCOffsetByLocation(double longitude, double latitude) async {
+  //
+  // }
+
+
+  static Future<int> getUTCOffsetByZone(String zone) async {
     if (zoneFixes.containsKey(zone)) {
       zone = zoneFixes[zone]!;
     }
-    int offset = 0;
 
-    var queryParams = {
+    return getUTCOffsetWithAddionalParams({
+      'by': 'zone',
+      'zone' : zone,
+    });
+  }
+
+
+  static Future<int> getUTCOffsetWithAddionalParams(Map<String, String> additionalParams) async {
+    return getUTCOffset({
       'key': APIKeys.timeZoneDBAPI,
       'format': 'json',
-      'by': 'zone',
-      'zone': zone
-    };
+      ...additionalParams
+    });
+  }
+
+  static Future<int> getUTCOffset(Map<String, String> queryParams) async {
+
+    int offset = 0;
 
     while(true) {
       try {
@@ -43,9 +56,9 @@ class GetFromTimeZoneDB {
           case DioErrorType.receiveTimeout:
           case DioErrorType.sendTimeout:
           case DioErrorType.unknown:
-            //just retry
+          //just retry
             await Future.delayed(const Duration(seconds: 2));
-            getUTCOffset(zone);
+            getUTCOffset(queryParams);
             break;
 
           default:
@@ -55,6 +68,24 @@ class GetFromTimeZoneDB {
     }
     return offset;
   }
+
+  /*
+  "status": "OK",
+    "message": "",
+    "countryCode": "US",
+    "countryName": "United States",
+    "regionName": "",
+    "cityName": "",
+    "zoneName": "America\/Chicago",
+    "abbreviation": "CST",
+    "gmtOffset": -21600,
+    "dst": "0",
+    "zoneStart": 1667718000,
+    "zoneEnd": 1678607999,
+    "nextAbbreviation": "CDT",
+    "timestamp": 1676620441,
+    "formatted": "2023-02-17 07:54:01"
+   */
 
   //for some reason timezonedb has these with 3 names idk why
   static final Map<String, String> zoneFixes = {
