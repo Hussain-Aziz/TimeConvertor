@@ -1,23 +1,28 @@
 import 'package:dots_indicator/dots_indicator.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class TimeZonesScreen extends StatefulWidget {
-  const TimeZonesScreen({Key? key}) : super(key: key);
+  int localUtcOffset;
+
+  TimeZonesScreen({Key? key,  required this.localUtcOffset}) : super(key: key);
 
   @override
   State<TimeZonesScreen> createState() => _TimeZonesScreenState();
 }
 
 class _TimeZonesScreenState extends State<TimeZonesScreen> {
-  PageController pageController = PageController(viewportFraction: 1);
+  PageController pageController = PageController();
   double currentPage = 0.0;
-  double scaleFactor = 0.8;
-  int numPages() => 3;
+  DateTime localTime = DateTime.now();
+
+  int localUtcOffset = 0;
+
+  int numPages() => 3; //TODO: Get from sql database
 
   @override
   void initState() {
     super.initState();
+    localUtcOffset = widget.localUtcOffset;
     pageController.addListener(() {
       setState(() {
         currentPage = pageController.page!;
@@ -41,7 +46,8 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
             itemCount: numPages(),
             controller: pageController,
             itemBuilder: (context, position) {
-              return buildTimeZonePages(position, MediaQuery.of(context).size.height);
+              return buildTimeZonePages(
+                  position, MediaQuery.of(context).size.height);
             }),
         Align(
           alignment: Alignment.bottomCenter,
@@ -57,12 +63,24 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
     );
   }
 
-  Widget buildTimeZonePages(int index, double? height) {
+  void selectTime() async {
+    TimeOfDay? newTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      initialEntryMode: TimePickerEntryMode.dial,
+    );
+    if (newTime != null) {
+      setState(() {
+        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day,
+            newTime.hour, newTime.minute);
+        //_time = newTime;
+      });
+    }
+  }
 
+  Widget buildTimeZonePages(int index, double? height) {
     return Stack(
-        children: [
-          Text("HI")
-        ],
+      children: [Text("HI")],
     );
   }
 }

@@ -10,15 +10,22 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+
+  int localUtcOffset = 0;
+
   @override
   Widget build(BuildContext context) {
+
+    var args = ModalRoute.of(context)?.settings.arguments as Map<String,int>;
+    localUtcOffset = args['offset']!;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("Time Convertor"),
+        title: const Text("Time Convertor"),
         centerTitle: true,
       ),
 
-      body: selectedBottomBarIndex == 0 ? TimeZonesScreen() : AlarmsScreen(),
+      body: selectedBottomBarIndex == 0 ? TimeZonesScreen(localUtcOffset: localUtcOffset) : AlarmsScreen(),
       
       bottomNavigationBar: BottomNavigationBar(
         items: const [

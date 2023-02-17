@@ -1,3 +1,6 @@
+import 'dart:ui';
+
+import 'package:TimeConvertor/pages/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:TimeConvertor/pages/main_page.dart';
 
@@ -8,8 +11,6 @@ void main() {
 class MyApp extends StatelessWidget {
    MyApp({super.key});
 
-  Map<int, Color> color = {  };
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -19,7 +20,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MainPage(),
+      initialRoute: "/loading",
+      routes: {
+        "/loading" : (_) => LoadingPage(),
+        "/main" : (_) => MainPage(),
+      },
     );
   }
 }
