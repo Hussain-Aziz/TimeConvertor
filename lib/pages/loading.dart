@@ -1,4 +1,5 @@
 import 'package:TimeConvertor/main.dart';
+import 'package:TimeConvertor/services/sql_database.dart';
 import 'package:TimeConvertor/utils/consts.dart';
 import 'package:TimeConvertor/services/get_from_timezonedb.dart';
 import 'package:TimeConvertor/services/get_local_timezone.dart';
@@ -19,34 +20,31 @@ class LoadingPage extends StatefulWidget {
 class _LoadingPageState extends State<LoadingPage> {
 
   late SharedPreferences localStorage;
-  @override
-  void initState() {
-    initLoading();
-    super.initState();
-  }
   String loadingText = "";
   bool isError = false;
   bool splashRemoved = false;
 
-  Future<void> getLocalStorage() async{
-    localStorage = await SharedPreferences.getInstance();
+  late Future<void> databaseLoad;
+
+  @override
+  void initState() {
+    initLoading();
+    super.initState();
   }
 
   void initLoading() async {
 
     await getLocalStorage();
 
+    databaseLoad = loadLocalDatabase();
+
     addFormatToStream();
 
-    int? offset = localStorage.getInt(Consts.localUTCOffsetLSName);
-    if (offset != null)
-    {
-      updateOffsetIncaseOfLocationChange();
-      saveLocalOffset(offset);
+    if (tryGetOffsetFromLS()){
       return leave();
     }
 
-    // so error can be shown
+    // so errors can be shown
     Future.delayed(const Duration(seconds: 3), () {
       removeSplashScreen();
     });
@@ -54,38 +52,83 @@ class _LoadingPageState extends State<LoadingPage> {
     try {
       changeLoadingText("Loading...\nGetting Local UTC Offset.\n\nPlease make sure you are connected to the internet");
 
-      offset = await getOffsetFromDB();
+      int offset = await getOffsetFromDB();
 
       saveLocalOffset(offset);
 
       return leave();
 
-    } catch (e){
+    } catch (e) {
       isError = true;
       changeLoadingText("Loading...\nGetting Local UTC Offset.\n\nPlease make sure you are connected to the internet");
       removeSplashScreen();
     }
   }
 
-  Future<int> getOffsetFromDB() async{
+  Future<void> getLocalStorage() async {
+    localStorage = await SharedPreferences.getInstance();
+  }
+
+  Future<int> getOffsetFromDB() async {
     String zone = await GetLocalTimeZone.get();
     return (await GetFromTimeZoneDB.getTZDBResponseByZone(zone)).gmtOffset;
   }
 
-  void changeLoadingText(String newText)
-  {
+  bool tryGetOffsetFromLS() {
+    int? offset = localStorage.getInt(Consts.localUTCOffsetLSName);
+    if (offset != null)
+    {
+      updateOffsetIncaseOfLocationChange();
+      saveLocalOffset(offset);
+      return true;
+    }
+    return false;
+  }
+
+  void changeLoadingText(String newText) {
     setState(() {
       loadingText = newText;
     });
   }
 
-  void removeSplashScreen()
-  {
-    if (!splashRemoved)
-    {
+  void removeSplashScreen() {
+    if (!splashRemoved) {
       setState(() => splashRemoved = true);
       FlutterNativeSplash.remove();
     }
+  }
+
+  void leave() async {
+    
+    await Future.wait([databaseLoad]);
+    
+    Navigator.pushReplacementNamed(context, "/main");
+    removeSplashScreen();
+  }
+
+  void addFormatToStream() {
+    var formatStr = localStorage.getString(Consts.formatLSName);
+
+    formatStr ??= Format.f12h.toString(); //default
+
+    final format = Format.values.firstWhere((e) => e.toString() == formatStr);
+
+    localStorage.setString(Consts.formatLSName, format.toString());
+    getIt.get<FormatStream>().set(format);
+  }
+
+  void saveLocalOffset(int offset){
+    localStorage.setInt(Consts.localUTCOffsetLSName, offset);
+    getIt.get<LocalUTCOffsetStream>().set(offset);
+  }
+
+  void updateOffsetIncaseOfLocationChange() async {
+    final offset = await getOffsetFromDB();
+    saveLocalOffset(offset);
+  }
+
+  Future<void> loadLocalDatabase() async {
+    database = await SQLDatabse.loadDatabase();
   }
 
   @override
@@ -116,31 +159,5 @@ class _LoadingPageState extends State<LoadingPage> {
           ]
       ),
     );
-  }
-
-  void leave() async {
-    Navigator.pushReplacementNamed(context, "/main");
-    removeSplashScreen();
-  }
-
-  void addFormatToStream() {
-    var formatStr = localStorage.getString(Consts.formatLSName);
-
-    formatStr ??= Format.f12h.toString(); //default
-
-    final format = Format.values.firstWhere((e) => e.toString() == formatStr);
-
-    localStorage.setString(Consts.formatLSName, format.toString());
-    getIt.get<FormatStream>().set(format);
-  }
-
-  void saveLocalOffset(int offset){
-    localStorage.setInt(Consts.localUTCOffsetLSName, offset);
-    getIt.get<LocalUTCOffsetStream>().set(offset);
-  }
-
-  void updateOffsetIncaseOfLocationChange() async {
-    final offset = await getOffsetFromDB();
-    saveLocalOffset(offset);
   }
 }

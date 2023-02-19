@@ -3,8 +3,6 @@ import 'package:TimeConvertor/utils/local_utc_offset_stream.dart';
 import 'package:dots_indicator/dots_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:TimeConvertor/widgets/page_indicator.dart';
-import 'package:flutter/src/material/time_picker.dart';
-import 'dart:math' as math;
 
 
 class TimeZonesScreen extends StatefulWidget {

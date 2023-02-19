@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:TimeConvertor/pages/main_page.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get_it/get_it.dart';
+import 'package:sqflite/sqflite.dart';
 
 GetIt getIt = GetIt.instance;
+late Database database;
 
 void main() {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
