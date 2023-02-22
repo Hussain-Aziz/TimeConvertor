@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'timezonedb_response.dart';
+part of '../data/timezonedb_response.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

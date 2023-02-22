@@ -1,8 +1,6 @@
-import 'package:json_annotation/json_annotation.dart';
-
 class TimeZoneData {
-  TimeZoneData(this.index, this.name, this.offset, this.longitude, this.latitude);
-  int index;
+  TimeZoneData(this.id, this.name, this.offset, this.longitude, this.latitude);
+  int id;
   String name;
   int offset;
   double latitude;
@@ -10,7 +8,7 @@ class TimeZoneData {
 
   Map<String, dynamic> toMap() {
     return {
-      'index': index,
+      'id': id,
       'name': name,
       'offset': offset,
       'latitude': latitude,
@@ -20,7 +18,7 @@ class TimeZoneData {
 
    static TimeZoneData fromMap(Map<String, dynamic> map) {
     return TimeZoneData(
-      map['index'],
+      map['id'],
       map['name'],
       map['offset'],
       map['latitude'],

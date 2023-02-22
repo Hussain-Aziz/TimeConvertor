@@ -1,5 +1,5 @@
 import 'package:TimeConvertor/utils/api_keys.dart';
-import 'package:TimeConvertor/services/timezonedb_response.dart';
+import 'package:TimeConvertor/data/timezonedb_response.dart';
 import 'package:dio/dio.dart';
 
 final dio = Dio();

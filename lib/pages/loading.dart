@@ -2,10 +2,9 @@ import 'package:TimeConvertor/main.dart';
 import 'package:TimeConvertor/services/sql_database.dart';
 import 'package:TimeConvertor/utils/consts.dart';
 import 'package:TimeConvertor/services/get_from_timezonedb.dart';
-import 'package:TimeConvertor/services/get_local_timezone.dart';
-import 'package:TimeConvertor/utils/format_stream.dart';
-import 'package:TimeConvertor/utils/local_utc_offset_stream.dart';
+import 'package:TimeConvertor/utils/streams.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,7 +23,7 @@ class _LoadingPageState extends State<LoadingPage> {
   bool isError = false;
   bool splashRemoved = false;
 
-  late Future<void> databaseLoad;
+  late Future<void> localDataLoad;
 
   @override
   void initState() {
@@ -36,7 +35,7 @@ class _LoadingPageState extends State<LoadingPage> {
 
     await getLocalStorage();
 
-    databaseLoad = loadLocalDatabase();
+    localDataLoad = loadLocalData();
 
     addFormatToStream();
 
@@ -70,7 +69,7 @@ class _LoadingPageState extends State<LoadingPage> {
   }
 
   Future<int> getOffsetFromDB() async {
-    String zone = await GetLocalTimeZone.get();
+    String zone = await FlutterNativeTimezone.getLocalTimezone();
     return (await GetFromTimeZoneDB.getTZDBResponseByZone(zone)).gmtOffset;
   }
 
@@ -78,7 +77,7 @@ class _LoadingPageState extends State<LoadingPage> {
     int? offset = localStorage.getInt(Consts.localUTCOffsetLSName);
     if (offset != null)
     {
-      updateOffsetIncaseOfLocationChange();
+      updateOffsetInCaseOfLocationChange();
       saveLocalOffset(offset);
       return true;
     }
@@ -100,7 +99,7 @@ class _LoadingPageState extends State<LoadingPage> {
 
   void leave() async {
     
-    await Future.wait([databaseLoad]);
+    await Future.wait([localDataLoad]);
     
     Navigator.pushReplacementNamed(context, "/main");
     removeSplashScreen();
@@ -122,13 +121,15 @@ class _LoadingPageState extends State<LoadingPage> {
     getIt.get<LocalUTCOffsetStream>().set(offset);
   }
 
-  void updateOffsetIncaseOfLocationChange() async {
+  void updateOffsetInCaseOfLocationChange() async {
     final offset = await getOffsetFromDB();
     saveLocalOffset(offset);
   }
 
-  Future<void> loadLocalDatabase() async {
-    database = await SQLDatabse.loadDatabase();
+  Future<void> loadLocalData() async {
+    database = await SQLDatabase.loadDatabase();
+    final data = await SQLDatabase.getAll(database);
+    getIt.get<TimeZoneDataStream>().set(data);
   }
 
   @override

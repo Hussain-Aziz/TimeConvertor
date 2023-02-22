@@ -1,10 +1,11 @@
 import 'package:TimeConvertor/main.dart';
 import 'package:TimeConvertor/utils/consts.dart';
-import 'package:TimeConvertor/utils/format_stream.dart';
+import 'package:TimeConvertor/utils/streams.dart';
 import 'package:flutter/material.dart';
 import 'package:TimeConvertor/pages/alarms_page.dart';
 import 'package:TimeConvertor/pages/time_zones_page.dart';
 import 'package:toggle_switch/toggle_switch.dart';
+import 'package:TimeConvertor/utils/streams.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);

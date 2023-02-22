@@ -1,6 +1,5 @@
 import 'package:TimeConvertor/pages/loading.dart';
-import 'package:TimeConvertor/utils/format_stream.dart';
-import 'package:TimeConvertor/utils/local_utc_offset_stream.dart';
+import 'package:TimeConvertor/utils/streams.dart';
 import 'package:flutter/material.dart';
 import 'package:TimeConvertor/pages/main_page.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -16,6 +15,7 @@ void main() {
 
   getIt.registerSingleton<FormatStream>(FormatStream());
   getIt.registerSingleton<LocalUTCOffsetStream>(LocalUTCOffsetStream());
+  getIt.registerSingleton<TimeZoneDataStream>(TimeZoneDataStream());
 
   runApp(MyApp());
 }
