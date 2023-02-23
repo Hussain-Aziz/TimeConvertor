@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:TimeConvertor/main.dart';
 import 'package:TimeConvertor/services/sql_database.dart';
 import 'package:TimeConvertor/utils/consts.dart';
@@ -8,6 +10,7 @@ import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class LoadingPage extends StatefulWidget {
   const LoadingPage({Key? key}) : super(key: key);
@@ -23,7 +26,10 @@ class _LoadingPageState extends State<LoadingPage> {
   bool isError = false;
   bool splashRemoved = false;
 
-  late Future<void> localDataLoad;
+  late Future<void> persistenceDataLoad;
+  late Future<void> sharedPreferencesLoad;
+
+  late int localUTCOffset;
 
   @override
   void initState() {
@@ -33,25 +39,43 @@ class _LoadingPageState extends State<LoadingPage> {
 
   void initLoading() async {
 
-    await getLocalStorage();
+    sharedPreferencesLoad = loadSharedPreferences();
+    persistenceDataLoad = loadPersistentStorage();
 
-    localDataLoad = loadLocalData();
+    final connectivity = await (Connectivity().checkConnectivity());
 
-    addFormatToStream();
+    if ([ConnectivityResult.wifi, ConnectivityResult.mobile].contains(connectivity)) {
+      getIt.get<ConnectedStream>().set(true);
+    } else {
+      getIt.get<ConnectedStream>().set(false);
 
-    if (tryGetOffsetFromLS()){
-      return leave();
+      if (tryGetOffsetFromLS()) {
+        return leave();
+      } else {
+        Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+          var oldConnection = getIt.get<ConnectedStream>().get;
+          var stillIsConnected = [ConnectivityResult.wifi, ConnectivityResult.mobile].contains(result);
+
+          if (oldConnection != stillIsConnected){
+            getIt.get<ConnectedStream>().set(stillIsConnected);
+          }
+        });
+
+        await promptConnectToInternet();
+      }
     }
 
-    // so errors can be shown
-    Future.delayed(const Duration(seconds: 3), () {
-      removeSplashScreen();
-    });
+    ///if we reach here are connected
 
     try {
       changeLoadingText("Loading...\nGetting Local UTC Offset.\n\nPlease make sure you are connected to the internet");
 
-      int offset = await getOffsetFromDB();
+      // so errors can be shown
+      Future.delayed(const Duration(seconds: 3), () {
+        removeSplashScreen();
+      });
+
+      int offset = await getOffsetFromTimeZoneDB();
 
       saveLocalOffset(offset);
 
@@ -59,16 +83,36 @@ class _LoadingPageState extends State<LoadingPage> {
 
     } catch (e) {
       isError = true;
-      changeLoadingText("Loading...\nGetting Local UTC Offset.\n\nPlease make sure you are connected to the internet");
+      changeLoadingText("Loading...\nSome error occurred\n\n$e");
       removeSplashScreen();
     }
   }
 
-  Future<void> getLocalStorage() async {
-    localStorage = await SharedPreferences.getInstance();
+  Future<void> loadPersistentStorage() async {
+    database = await SQLDatabase.loadDatabase();
+    final data = await SQLDatabase.getAll(database);
+    getIt.get<TimeZoneDataStream>().set(data);
   }
 
-  Future<int> getOffsetFromDB() async {
+  Future<void> loadSharedPreferences() async {
+    localStorage = await SharedPreferences.getInstance();
+    await addFormatToStream();
+  }
+
+  Future<void> addFormatToStream() async {
+    var formatStr = localStorage.getString(Consts.formatLSName);
+
+    formatStr ??= Format.f12h.toString(); //default
+
+    final format = Format.values.firstWhere((e) => e.toString() == formatStr);
+
+    final formatStream = getIt.get<FormatStream>();
+    formatStream.set(format);
+
+    await localStorage.setString(Consts.formatLSName, format.toString());
+  }
+
+  Future<int> getOffsetFromTimeZoneDB() async {
     String zone = await FlutterNativeTimezone.getLocalTimezone();
     return (await GetFromTimeZoneDB.getTZDBResponseByZone(zone)).gmtOffset;
   }
@@ -77,11 +121,15 @@ class _LoadingPageState extends State<LoadingPage> {
     int? offset = localStorage.getInt(Consts.localUTCOffsetLSName);
     if (offset != null)
     {
-      updateOffsetInCaseOfLocationChange();
       saveLocalOffset(offset);
       return true;
     }
     return false;
+  }
+
+  void saveLocalOffset(int offset){
+    localStorage.setInt(Consts.localUTCOffsetLSName, offset);
+    localUTCOffset = offset;
   }
 
   void changeLoadingText(String newText) {
@@ -98,38 +146,14 @@ class _LoadingPageState extends State<LoadingPage> {
   }
 
   void leave() async {
-    
-    await Future.wait([localDataLoad]);
-    
-    Navigator.pushReplacementNamed(context, "/main");
+
+    await Future.wait([persistenceDataLoad, sharedPreferencesLoad]);
+
+    Map<String, int> args = {
+      "offset" : localUTCOffset
+    };
+    Navigator.pushReplacementNamed(context, "/main", arguments: args);
     removeSplashScreen();
-  }
-
-  void addFormatToStream() {
-    var formatStr = localStorage.getString(Consts.formatLSName);
-
-    formatStr ??= Format.f12h.toString(); //default
-
-    final format = Format.values.firstWhere((e) => e.toString() == formatStr);
-
-    localStorage.setString(Consts.formatLSName, format.toString());
-    getIt.get<FormatStream>().set(format);
-  }
-
-  void saveLocalOffset(int offset){
-    localStorage.setInt(Consts.localUTCOffsetLSName, offset);
-    getIt.get<LocalUTCOffsetStream>().set(offset);
-  }
-
-  void updateOffsetInCaseOfLocationChange() async {
-    final offset = await getOffsetFromDB();
-    saveLocalOffset(offset);
-  }
-
-  Future<void> loadLocalData() async {
-    database = await SQLDatabase.loadDatabase();
-    final data = await SQLDatabase.getAll(database);
-    getIt.get<TimeZoneDataStream>().set(data);
   }
 
   @override
@@ -159,6 +183,36 @@ class _LoadingPageState extends State<LoadingPage> {
             )
           ]
       ),
+    );
+  }
+
+  Future<void> promptConnectToInternet() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Internet Connection'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: const <Widget>[
+                Text('This app needs connection to internet to work.'),
+                Text('Please connect to the internet to continue'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Ok'),
+              onPressed: () {
+                if (getIt.get<ConnectedStream>().get) {
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

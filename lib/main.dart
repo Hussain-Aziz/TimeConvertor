@@ -14,8 +14,8 @@ void main() {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   getIt.registerSingleton<FormatStream>(FormatStream());
-  getIt.registerSingleton<LocalUTCOffsetStream>(LocalUTCOffsetStream());
   getIt.registerSingleton<TimeZoneDataStream>(TimeZoneDataStream());
+  getIt.registerSingleton<ConnectedStream>(ConnectedStream());
 
   runApp(MyApp());
 }

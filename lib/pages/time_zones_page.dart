@@ -10,18 +10,20 @@ import 'package:align_positioned/align_positioned.dart';
 
 class TimeZonesScreen extends StatefulWidget {
 
-  const TimeZonesScreen({Key? key}) : super(key: key);
+  const TimeZonesScreen({Key? key, required this.localOffset}) : super(key: key);
+
+  final int localOffset;
 
   @override
   State<TimeZonesScreen> createState() => _TimeZonesScreenState();
 }
 
 class _TimeZonesScreenState extends State<TimeZonesScreen> {
+
   PageController pageController = PageController();
   double currentPage = 0.0;
 
   late DateTime _referenceTime;
-  late int localOffset;
 
   int get numPages => getIt.get<TimeZoneDataStream>().get.length;
   DateTime getTimeDisplay(int offset) => _referenceTime.add(Duration(hours: getHoursFromOffset(offset), minutes: getMinutesFromOffset(offset)));
@@ -29,7 +31,7 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
 
   int getOffset(int index) {
     if (index == 0) {
-      return localOffset;
+      return widget.localOffset;
     }
     return getIt.get<TimeZoneDataStream>().get[index].offset;
   }
@@ -38,9 +40,8 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
   void initState() {
     super.initState();
 
-    localOffset = getIt.get<LocalUTCOffsetStream>().get;
-
-    _referenceTime = DateTime.now().subtract(Duration(hours: getMinutesFromOffset(localOffset), minutes: getMinutesFromOffset(localOffset)));
+    final now = DateTime.now();
+    _referenceTime = now.subtract(Duration(hours: getHoursFromOffset(widget.localOffset), minutes: getMinutesFromOffset(widget.localOffset)));
 
     pageController.addListener(() {
       setState(() {
@@ -201,15 +202,19 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
             ),
             AlignPositioned(
               alignment: Alignment.bottomCenter,
-              moveByChildHeight: -2,
+              dy: -150,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.location_on, size: 50),
-                  Text(getNameByIndex(index),
-                    style: const TextStyle(
-                      fontSize: 50,
-                      color: Colors.black,
+                  const Icon(Icons.location_on, size:50),
+                  Flexible(
+                    child: Text(getNameByIndex(index) + "",
+                      maxLines: 3,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 30,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                 ],

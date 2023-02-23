@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:TimeConvertor/pages/alarms_page.dart';
 import 'package:TimeConvertor/pages/time_zones_page.dart';
 import 'package:toggle_switch/toggle_switch.dart';
-import 'package:TimeConvertor/utils/streams.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -15,6 +14,8 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+
+  int? localOffset;
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +27,15 @@ class _MainPageState extends State<MainPage> {
 
     final width = MediaQuery.of(context).size.width * 2/3;
 
+    if (localOffset == null) {
+      final args = ModalRoute.of(context)!.settings.arguments as Map<String, int>;
+      localOffset = args['offset'];
+    }
+
     return Scaffold(
       appBar: appBar,
 
-      body: selectedBottomBarIndex == 0 ? TimeZonesScreen() : AlarmsScreen(),
+      body: selectedBottomBarIndex == 0 ? TimeZonesScreen(localOffset: localOffset!) : const AlarmsScreen(),
 
       bottomNavigationBar: BottomNavigationBar(
         items: const [
@@ -104,8 +110,7 @@ class _MainPageState extends State<MainPage> {
 
   int selectedBottomBarIndex = 0;
 
-  void onBottomNavigationBarTapped(int index)
-  {
+  void onBottomNavigationBarTapped(int index) {
     setState(() => selectedBottomBarIndex = index);
   }
 }

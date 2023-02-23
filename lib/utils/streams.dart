@@ -18,14 +18,5 @@ abstract class Stream<T>
 
 class FormatStream extends Stream<Format> {}
 class TimeZoneDataStream extends Stream<List<TimeZoneData>> {}
-
-class LocalUTCOffsetStream extends Stream<int>
-{
-  @override
-  set(int newValue){
-    if (subject.valueOrNull == null || subject.value != newValue) {
-      super.set(newValue);
-    }
-  }
-}
+class ConnectedStream extends Stream<bool> {}
 
