@@ -10,13 +10,11 @@ class SQLDatabase{
     return await openDatabase(
       path.join(await getDatabasesPath(), "$tableName.db"),
       onCreate: (db, version) async {
-        print("Creating table");
         await db.execute(
           'CREATE TABLE $tableName(id INTEGER PRIMARY KEY, name TEXT, offset INTEGER, latitude DOUBLE PRECISION, longitude DOUBLE PRECISION)',
         );
 
         await add(db, TimeZoneData(0, "Current Location", 0, 0, 0));
-        await add(db, TimeZoneData(1, "Dubai", 14400, 0, 0));
       },
       version: 1,
     );

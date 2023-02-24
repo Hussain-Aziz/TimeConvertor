@@ -39,43 +39,50 @@ class _LoadingPageState extends State<LoadingPage> {
 
   void initLoading() async {
 
+    //get these started
     sharedPreferencesLoad = loadSharedPreferences();
     persistenceDataLoad = loadPersistentStorage();
 
+    //hook connectivity change, this will be useful when prompting to connect and when creating new locations
+    Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+      var oldConnection = getIt.get<ConnectedStream>().get;
+      var stillIsConnected = [ConnectivityResult.wifi, ConnectivityResult.mobile].contains(result);
+
+      if (oldConnection != stillIsConnected){
+        getIt.get<ConnectedStream>().set(stillIsConnected);
+      }
+    });
+
+    //we need to await for connectivity result to make decision
     final connectivity = await (Connectivity().checkConnectivity());
 
-    if ([ConnectivityResult.wifi, ConnectivityResult.mobile].contains(connectivity)) {
-      getIt.get<ConnectedStream>().set(true);
-    } else {
-      getIt.get<ConnectedStream>().set(false);
+    final isConnected = [ConnectivityResult.wifi, ConnectivityResult.mobile].contains(connectivity);
+    getIt.get<ConnectedStream>().set(isConnected);
 
-      if (tryGetOffsetFromLS()) {
+    //if we are connected
+    if (!isConnected) {
+
+      await sharedPreferencesLoad;//make sure this has loaded (probably has)
+      int? offset = localStorage.getInt(Consts.localUTCOffsetLSName);
+
+      if (offset != null) { //if not connected and we have a previous offset saved, then just leave we dont need wifi
+        saveLocalOffset(offset);
         return leave();
-      } else {
-        Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
-          var oldConnection = getIt.get<ConnectedStream>().get;
-          var stillIsConnected = [ConnectivityResult.wifi, ConnectivityResult.mobile].contains(result);
-
-          if (oldConnection != stillIsConnected){
-            getIt.get<ConnectedStream>().set(stillIsConnected);
-          }
-        });
-
+      } else { // we need initial time zone data. we probably could get it from device but nah
         await promptConnectToInternet();
       }
     }
-
-    ///if we reach here are connected
 
     try {
       changeLoadingText("Loading...\nGetting Local UTC Offset.\n\nPlease make sure you are connected to the internet");
 
       // so errors can be shown
-      Future.delayed(const Duration(seconds: 3), () {
+      Future.delayed(const Duration(seconds: 5), () {
         removeSplashScreen();
       });
 
-      int offset = await getOffsetFromTimeZoneDB();
+      String zone = await FlutterNativeTimezone.getLocalTimezone();
+      int offset = (await GetFromTimeZoneDB.getTZDBResponseByZone(zone)).gmtOffset;
 
       saveLocalOffset(offset);
 
@@ -83,7 +90,7 @@ class _LoadingPageState extends State<LoadingPage> {
 
     } catch (e) {
       isError = true;
-      changeLoadingText("Loading...\nSome error occurred\n\n$e");
+      changeLoadingText("Loading...\nSome error occurred\n\n$e}");
       removeSplashScreen();
     }
   }
@@ -96,35 +103,15 @@ class _LoadingPageState extends State<LoadingPage> {
 
   Future<void> loadSharedPreferences() async {
     localStorage = await SharedPreferences.getInstance();
-    await addFormatToStream();
-  }
 
-  Future<void> addFormatToStream() async {
     var formatStr = localStorage.getString(Consts.formatLSName);
-
     formatStr ??= Format.f12h.toString(); //default
 
     final format = Format.values.firstWhere((e) => e.toString() == formatStr);
-
     final formatStream = getIt.get<FormatStream>();
     formatStream.set(format);
 
     await localStorage.setString(Consts.formatLSName, format.toString());
-  }
-
-  Future<int> getOffsetFromTimeZoneDB() async {
-    String zone = await FlutterNativeTimezone.getLocalTimezone();
-    return (await GetFromTimeZoneDB.getTZDBResponseByZone(zone)).gmtOffset;
-  }
-
-  bool tryGetOffsetFromLS() {
-    int? offset = localStorage.getInt(Consts.localUTCOffsetLSName);
-    if (offset != null)
-    {
-      saveLocalOffset(offset);
-      return true;
-    }
-    return false;
   }
 
   void saveLocalOffset(int offset){
@@ -147,7 +134,7 @@ class _LoadingPageState extends State<LoadingPage> {
 
   void leave() async {
 
-    await Future.wait([persistenceDataLoad, sharedPreferencesLoad]);
+    await Future.wait([persistenceDataLoad]);
 
     Map<String, int> args = {
       "offset" : localUTCOffset
@@ -187,6 +174,7 @@ class _LoadingPageState extends State<LoadingPage> {
   }
 
   Future<void> promptConnectToInternet() async {
+    removeSplashScreen();
     return showDialog<void>(
       context: context,
       barrierDismissible: false,

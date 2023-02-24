@@ -1,11 +1,11 @@
 import 'package:TimeConvertor/main.dart';
+import 'package:TimeConvertor/pages/input_new_location.dart';
 import 'package:TimeConvertor/utils/consts.dart';
 import 'package:TimeConvertor/utils/extensions.dart';
 import 'package:TimeConvertor/utils/streams.dart';
 import 'package:dots_indicator/dots_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:TimeConvertor/widgets/other_page_indicator.dart';
-import 'package:align_positioned/align_positioned.dart';
 
 
 class TimeZonesScreen extends StatefulWidget {
@@ -39,9 +39,7 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
   @override
   void initState() {
     super.initState();
-
-    final now = DateTime.now();
-    _referenceTime = now.subtract(Duration(hours: getHoursFromOffset(widget.localOffset), minutes: getMinutesFromOffset(widget.localOffset)));
+    _referenceTime = DateTime.now().subtract(Duration(hours: getHoursFromOffset(widget.localOffset), minutes: getMinutesFromOffset(widget.localOffset)));
 
     pageController.addListener(() {
       setState(() {
@@ -72,25 +70,30 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
     return SizedBox(
       height: MediaQuery.of(context).size.height,
       width: MediaQuery.of(context).size.width,
-      child: Stack(children: [
-        PageView.builder(
-            itemCount: numPages,
-            controller: pageController,
-            itemBuilder: (context, position) {
-              return buildTimeZonePages(
-                  position, MediaQuery.of(context).size.height, MediaQuery.of(context).size.width);
-            }),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            padding: const EdgeInsets.only(bottom: 20),
-            child: DotsIndicator(
-              dotsCount: numPages,
-              position: currentPage,
-            ),
-          ),
-        ),
-      ]),
+      child: StreamBuilder(
+          stream: getIt.get<TimeZoneDataStream>().stream,
+          builder: (context, snapshot) {
+            return Stack(children: [
+              PageView.builder(
+                  itemCount: numPages + 1,
+                  controller: pageController,
+                  itemBuilder: (context, position) {
+                    return buildTimeZonePages(
+                        position, MediaQuery.of(context).size.height, MediaQuery.of(context).size.width);
+                  }),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: DotsIndicator(
+                    dotsCount: numPages + 1,
+                    position: currentPage,
+                  ),
+                ),
+              ),
+            ]);
+          }
+      ),
     );
   }
 
@@ -120,6 +123,7 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
   }
 
   Widget buildTimeZonePages(int index, double height, double width) {
+
     Matrix4 matrix = Matrix4.identity();
 
     double currentScale = 0.9, scaleFactor = 0.9;
@@ -135,6 +139,9 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
     //set the scale and make it go a bit down to account for the size diff
     matrix = Matrix4.diagonal3Values(1, currentScale, 1)..setTranslationRaw(0, height * (1-currentScale)/2, 0);
 
+    if (index == numPages){
+      return promptAddNewTimeZonePage(matrix);
+    }
     return Transform(
       transform: matrix,
       child: Container(
@@ -144,10 +151,10 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
         ),
-        child: Stack(
+        child: Column(
           children: [
-            Align(
-              alignment: const Alignment(0,-0.95),
+            Flexible(
+              flex: 1,
               child: SizedBox(
                 height: 60,
                 child: Row(
@@ -161,34 +168,28 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
                 ),
               ),
             ),
-            AlignPositioned(
-              alignment: Alignment.center,
-              moveByChildHeight: -0.3,
-              child: StreamBuilder(
-                stream: getIt.get<FormatStream>().stream,
-                builder: (context, snap) {
-                  return TextButton(
-                    onPressed: () => selectTime(),
-                    child: Text(getDisplayText(index),
-                      style: const TextStyle(
-                          fontSize: 160,
-                          color: Colors.black,
-                          fontFamily: 'Fokus',
-                          letterSpacing: 5
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            AlignPositioned(
-              alignment: const Alignment(0.8,-0.25),
-              dy: 15,
-              dx: 10,
-              child: StreamBuilder(
-                stream: getIt.get<FormatStream>().stream,
-                builder: (context, snap) {
-                  return Text(getIt.get<FormatStream>().get == Format.f24h ? ""
+            Expanded(
+              flex: 5,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  StreamBuilder(
+                    stream: getIt.get<FormatStream>().stream,
+                    builder: (context, snap) {
+                      return OutlinedButton(
+                        onPressed: () => selectTime(),
+                        child: Text(getDisplayText(index),
+                          style: const TextStyle(
+                              fontSize: 160,
+                              color: Colors.black,
+                              fontFamily: 'Fokus',
+                              letterSpacing: 5
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Text(getIt.get<FormatStream>().get == Format.f24h ? ""
                       : getTimeDisplay(getOffset(index)).hour < 12 ? "AM" : "PM",
                     style: const TextStyle(
                         fontSize: 30,
@@ -196,21 +197,21 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
                         fontFamily: 'Fokus',
                         letterSpacing: 1
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
             ),
-            AlignPositioned(
-              alignment: Alignment.bottomCenter,
-              dy: -150,
+            Flexible(
+              flex: 2,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.location_on, size:50),
                   Flexible(
-                    child: Text(getNameByIndex(index) + "",
-                      maxLines: 3,
+                    child: Text(getNameByIndex(index),
                       textAlign: TextAlign.center,
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 30,
                         color: Colors.black,
@@ -224,6 +225,61 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
         ),
       ),
     );
+  }
+
+  Widget promptAddNewTimeZonePage(Matrix4 matrix){
+    return Transform(
+      transform: matrix,
+      child: Stack(
+          children:[
+            ElevatedButton(
+                onPressed: () {
+                  goToInputNewLocationPage();
+                },
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateColor.resolveWith((states) => Colors.white) ,
+                ),
+                child: Container(
+                  color: Colors.white,
+                )
+            ),
+            Center(
+              child: SizedBox(
+                height: 250,
+                child: Column(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outlined),
+                      iconSize: 150,
+                      color: Colors.blue,
+                      onPressed: (){
+                        goToInputNewLocationPage();
+                      },
+                    ),
+                    TextButton(onPressed: (){
+                      goToInputNewLocationPage();
+                    },
+                        child: const Text("Add new location",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 30,
+                            color: Colors.black,
+                          ),
+                        )
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ]
+      ),
+    );
+  }
+
+  void goToInputNewLocationPage(){
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return InputNewLocationPage();
+    }));
   }
 
   String getDisplayText(int index) {

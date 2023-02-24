@@ -68,7 +68,8 @@ class _MainPageState extends State<MainPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   const Text("Format: ",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)
+                  ),
                   StreamBuilder(
                       stream: getIt.get<FormatStream>().stream,
                       builder: (context, snap){
