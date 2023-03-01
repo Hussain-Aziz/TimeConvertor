@@ -160,6 +160,8 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children:[
+                    if (index == 0) 
+                    ...[Container()], //so the indicator only appears on the right
                     if (index != 0)
                       ...[OtherPageIndicator(text: getNameByIndex(index - 1), flipped: false)],
                     if (index != numPages - 1)

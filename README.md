@@ -7,7 +7,7 @@ An app to make time conversions between timezones as easy as possible
 
 ## To Build
 - Clone the repo
-- Create a `api_keys.dart` file in the lib folder
+- Create a `api_keys.dart` file in lib/utils folder
 - Create a class similar to the code below
 ```dart
 class APIKeys
