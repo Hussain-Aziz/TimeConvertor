@@ -15,13 +15,13 @@ dependencies:
   dots_indicator: ^2.1.0
   flutter_native_timezone: ^2.0.0
   shared_preferences: ^2.0.17
-  json_annotation: ^4.8.0
   flutter_native_splash: ^2.2.17
   toggle_switch: ^2.0.1
   get_it: ^7.2.0
   rxdart: ^0.27.7
   sqflite: ^2.2.4+1
   connectivity_plus: ^3.0.3
+  tuple: ^2.0.1
 
 dev_dependencies:
   flutter_test:
@@ -29,8 +29,6 @@ dev_dependencies:
   flutter_lints: ^2.0.0
   # only re-enable when wanted because it conflicts with flutter_native_splash
   # flutter_launcher_icons: ^0.7.4
-  build_runner: ^2.3.3
-  json_serializable: ^6.6.1
 
 flutter_native_splash:
   color: "#2196f3"

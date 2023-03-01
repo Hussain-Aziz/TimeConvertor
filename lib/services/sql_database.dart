@@ -2,8 +2,7 @@ import 'package:TimeConvertor/data/time_zone_data.dart';
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
 
-class SQLDatabase{
-
+class SQLDatabase {
   static const String tableName = 'time_zones';
 
   static Future<Database> loadDatabase() async {
@@ -11,10 +10,10 @@ class SQLDatabase{
       path.join(await getDatabasesPath(), "$tableName.db"),
       onCreate: (db, version) async {
         await db.execute(
-          'CREATE TABLE $tableName(id INTEGER PRIMARY KEY, name TEXT, offset INTEGER, latitude DOUBLE PRECISION, longitude DOUBLE PRECISION)',
+          'CREATE TABLE $tableName(id INTEGER PRIMARY KEY, name TEXT, offset INTEGER, zoneName TEXT)',
         );
 
-        await add(db, TimeZoneData(0, "Current Location", 0, 0, 0));
+        await add(db, TimeZoneData(0, "Current Location", 0, ""));
       },
       version: 1,
     );
@@ -27,6 +26,7 @@ class SQLDatabase{
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
+
   static Future<void> delete(Database database, int index) async {
     await database.delete(
       tableName,
@@ -34,7 +34,9 @@ class SQLDatabase{
       whereArgs: [index],
     );
   }
-  static Future<void> swapIndex(Database database, TimeZoneData tzd1, TimeZoneData tzd2) async {
+
+  static Future<void> swapIndex(
+      Database database, TimeZoneData tzd1, TimeZoneData tzd2) async {
     await Future.wait([delete(database, tzd1.id), delete(database, tzd2.id)]);
 
     int temp = tzd1.id;

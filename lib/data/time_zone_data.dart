@@ -1,28 +1,29 @@
 class TimeZoneData {
-  TimeZoneData(this.id, this.name, this.offset, this.longitude, this.latitude);
+  TimeZoneData(this.id, this.name, this.offset, this.zoneName);
   int id;
   String name;
   int offset;
-  double latitude;
-  double longitude;
+  String zoneName;
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
       'offset': offset,
-      'latitude': latitude,
-      'longitude': longitude,
+      'zoneName': zoneName,
     };
   }
 
-   static TimeZoneData fromMap(Map<String, dynamic> map) {
+  static TimeZoneData empty() {
+    return TimeZoneData(0, "", 0, "");
+  }
+
+  static TimeZoneData fromMap(Map<String, dynamic> map) {
     return TimeZoneData(
       map['id'],
       map['name'],
       map['offset'],
-      map['latitude'],
-      map['longitude'],
+      map['zoneName'],
     );
   }
 }

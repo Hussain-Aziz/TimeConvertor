@@ -45,3 +45,4 @@ app.*.map.json
 
 lib/utils/api_keys.dart
 analysis_options.yaml
+.vscode/settings.json
