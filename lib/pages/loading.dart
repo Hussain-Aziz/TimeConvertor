@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:TimeConvertor/data/time_zone_data.dart';
 import 'package:TimeConvertor/main.dart';
 import 'package:TimeConvertor/services/sql_database.dart';
 import 'package:TimeConvertor/utils/consts.dart';
@@ -20,7 +21,6 @@ class LoadingPage extends StatefulWidget {
 }
 
 class _LoadingPageState extends State<LoadingPage> {
-
   late SharedPreferences localStorage;
   String loadingText = "";
   bool isError = false;
@@ -38,7 +38,6 @@ class _LoadingPageState extends State<LoadingPage> {
   }
 
   void initLoading() async {
-
     //get these started
     sharedPreferencesLoad = loadSharedPreferences();
     persistenceDataLoad = loadPersistentStorage();
@@ -46,9 +45,10 @@ class _LoadingPageState extends State<LoadingPage> {
     //hook connectivity change, this will be useful when prompting to connect and when creating new locations
     Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
       var oldConnection = getIt.get<ConnectedStream>().get;
-      var stillIsConnected = [ConnectivityResult.wifi, ConnectivityResult.mobile].contains(result);
+      var stillIsConnected =
+          [ConnectivityResult.wifi, ConnectivityResult.mobile].contains(result);
 
-      if (oldConnection != stillIsConnected){
+      if (oldConnection != stillIsConnected) {
         getIt.get<ConnectedStream>().set(stillIsConnected);
       }
     });
@@ -56,25 +56,28 @@ class _LoadingPageState extends State<LoadingPage> {
     //we need to await for connectivity result to make decision
     final connectivity = await (Connectivity().checkConnectivity());
 
-    final isConnected = [ConnectivityResult.wifi, ConnectivityResult.mobile].contains(connectivity);
+    final isConnected = [ConnectivityResult.wifi, ConnectivityResult.mobile]
+        .contains(connectivity);
     getIt.get<ConnectedStream>().set(isConnected);
 
     //if we are connected
     if (!isConnected) {
-
-      await sharedPreferencesLoad;//make sure this has loaded (probably has)
+      await sharedPreferencesLoad; //make sure this has loaded (probably has)
       int? offset = localStorage.getInt(Consts.localUTCOffsetLSName);
 
-      if (offset != null) { //if not connected and we have a previous offset saved, then just leave we dont need wifi
+      if (offset != null) {
+        //if not connected and we have a previous offset saved, then just leave we dont need wifi
         saveLocalOffset(offset);
         return leave();
-      } else { // we need initial time zone data. we probably could get it from device but nah
+      } else {
+        // we need initial time zone data. we probably could get it from device but nah
         await promptConnectToInternet();
       }
     }
 
     try {
-      changeLoadingText("Loading...\nGetting Local UTC Offset.\n\nPlease make sure you are connected to the internet");
+      changeLoadingText(
+          "Loading...\nGetting Local UTC Offset.\n\nPlease make sure you are connected to the internet");
 
       // so errors can be shown
       Future.delayed(const Duration(seconds: 5), () {
@@ -82,12 +85,11 @@ class _LoadingPageState extends State<LoadingPage> {
       });
 
       String zone = await FlutterNativeTimezone.getLocalTimezone();
-      int offset = (await GetFromTimeZoneDB.getTZDBResponseByZone(zone)).gmtOffset;
+      int offset = await GetFromTimeZoneDB.getUTCOffsetByZone(zone);
 
       saveLocalOffset(offset);
 
       return leave();
-
     } catch (e) {
       isError = true;
       changeLoadingText("Loading...\nSome error occurred\n\n$e}");
@@ -98,7 +100,29 @@ class _LoadingPageState extends State<LoadingPage> {
   Future<void> loadPersistentStorage() async {
     database = await SQLDatabase.loadDatabase();
     final data = await SQLDatabase.getAll(database);
+
+    Map<int, Future<int>> requests = {};
+
+    for (int i = 0; i < data.length; i++) {
+      TimeZoneData zoneData = data.elementAt(i);
+      if (zoneData.zoneName != "") {
+        requests[i] = GetFromTimeZoneDB.getUTCOffsetByZone(zoneData.zoneName);
+      }
+    }
+
+    await Future.wait(requests.values);
+
+    //its already awaited so should just return
+    requests.forEach((key, value) async {
+      data.elementAt(key).offset = await value;
+    });
+
     getIt.get<TimeZoneDataStream>().set(data);
+
+    //just replace all of them
+    for (TimeZoneData tzd in data) {
+      SQLDatabase.add(database, tzd);
+    }
   }
 
   Future<void> loadSharedPreferences() async {
@@ -114,7 +138,7 @@ class _LoadingPageState extends State<LoadingPage> {
     await localStorage.setString(Consts.formatLSName, format.toString());
   }
 
-  void saveLocalOffset(int offset){
+  void saveLocalOffset(int offset) {
     localStorage.setInt(Consts.localUTCOffsetLSName, offset);
     localUTCOffset = offset;
   }
@@ -133,12 +157,9 @@ class _LoadingPageState extends State<LoadingPage> {
   }
 
   void leave() async {
-
     await Future.wait([persistenceDataLoad]);
 
-    Map<String, int> args = {
-      "offset" : localUTCOffset
-    };
+    Map<String, int> args = {"offset": localUTCOffset};
     Navigator.pushReplacementNamed(context, "/main", arguments: args);
     removeSplashScreen();
   }
@@ -147,29 +168,27 @@ class _LoadingPageState extends State<LoadingPage> {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
-      child: Stack(
-          children: [
-            Center(
-              child: SpinKitDoubleBounce(color: splashRemoved ? Colors.blue : Colors.white, size: 100),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 40, horizontal: 10),
-                child: Text(loadingText,
+      child: Stack(children: [
+        Center(
+          child: SpinKitDoubleBounce(
+              color: splashRemoved ? Colors.blue : Colors.white, size: 100),
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 40, horizontal: 10),
+            child: Text(loadingText,
+                overflow: TextOverflow.visible,
+                maxLines: 10,
+                style: TextStyle(
+                    fontWeight: FontWeight.normal,
                     overflow: TextOverflow.visible,
-                    maxLines: 10,
-                    style: TextStyle(
-                        fontWeight: FontWeight.normal,
-                        overflow: TextOverflow.visible,
-                        color: isError ? Colors.red[600] : Colors.blue[700],
-                        fontSize: 18,
-                        decoration: TextDecoration.none
-                    )),
-              ),
-            )
-          ]
-      ),
+                    color: isError ? Colors.red[600] : Colors.blue[700],
+                    fontSize: 18,
+                    decoration: TextDecoration.none)),
+          ),
+        )
+      ]),
     );
   }
 
