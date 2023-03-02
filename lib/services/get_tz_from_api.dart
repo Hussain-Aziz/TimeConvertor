@@ -1,5 +1,5 @@
 import 'package:TimeConvertor/data/time_zone_data.dart';
-import 'package:TimeConvertor/utils/api_keys.dart';
+import 'package:TimeConvertor/env/env.dart';
 import 'package:dio/dio.dart';
 
 //get time zone by zone from world time api which doesnt have a restriction and
@@ -13,7 +13,7 @@ class GetTZFromAPI {
   static Future<Map<String, dynamic>> getZoneDataFromPosition(
       double latitude, double longitude) async {
     Map<String, String> queryParams = {
-      'key': APIKeys.timeZoneDBAPI,
+      'key': Env.timeZoneDBAPI,
       'format': 'json',
       'by': 'position',
       'lat': latitude.toString(),
