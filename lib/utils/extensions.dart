@@ -1,7 +1,21 @@
 import 'package:flutter/material.dart';
 
+extension CreateDropDownMenuItemList on List<String> {
+  List<DropdownMenuItem<String>> mapToDropdownMenuItem({TextStyle? style}) {
+    return map<DropdownMenuItem<String>>((String value) {
+      return DropdownMenuItem<String>(
+        value: value,
+        child: Text(
+          value,
+          style: style,
+        ),
+      );
+    }).toList();
+  }
+}
+
 extension TimeFormatting on int {
-  String getFormatForTimeDisplay(){
+  String getFormatForTimeDisplay() {
     return toString().padLeft(2, '0');
   }
 
@@ -21,7 +35,7 @@ extension DateTimeExtension on DateTime {
     return DateTime(year, month, day, hour, minute);
   }
 
-  TimeOfDay toTimeOfDay(){
+  TimeOfDay toTimeOfDay() {
     return TimeOfDay(hour: hour, minute: minute);
   }
 }
