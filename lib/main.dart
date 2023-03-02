@@ -17,11 +17,11 @@ void main() {
   getIt.registerSingleton<TimeZoneDataStream>(TimeZoneDataStream());
   getIt.registerSingleton<ConnectedStream>(ConnectedStream());
 
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-   MyApp({super.key});
+   const MyApp({super.key});
 
   // This widget is the root of your application.
   @override
@@ -34,8 +34,8 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: "/loading",
       routes: {
-        "/loading" : (_) => LoadingPage(),
-        "/main" : (_) => MainPage(),
+        "/loading" : (_) => const LoadingPage(),
+        "/main" : (_) => const MainPage(),
       },
     );
   }

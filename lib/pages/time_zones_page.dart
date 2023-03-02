@@ -7,10 +7,9 @@ import 'package:dots_indicator/dots_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:TimeConvertor/widgets/other_page_indicator.dart';
 
-
 class TimeZonesScreen extends StatefulWidget {
-
-  const TimeZonesScreen({Key? key, required this.localOffset}) : super(key: key);
+  const TimeZonesScreen({Key? key, required this.localOffset})
+      : super(key: key);
 
   final int localOffset;
 
@@ -19,15 +18,17 @@ class TimeZonesScreen extends StatefulWidget {
 }
 
 class _TimeZonesScreenState extends State<TimeZonesScreen> {
-
   PageController pageController = PageController();
   double currentPage = 0.0;
 
   late DateTime _referenceTime;
 
   int get numPages => getIt.get<TimeZoneDataStream>().get.length;
-  DateTime getTimeDisplay(int offset) => _referenceTime.add(Duration(hours: getHoursFromOffset(offset), minutes: getMinutesFromOffset(offset)));
-  DateTime getCurrentTimeDisplay() => getTimeDisplay(getOffset(currentPage.round()));
+  DateTime getTimeDisplay(int offset) => _referenceTime.add(Duration(
+      hours: getHoursFromOffset(offset),
+      minutes: getMinutesFromOffset(offset)));
+  DateTime getCurrentTimeDisplay() =>
+      getTimeDisplay(getOffset(currentPage.round()));
 
   int getOffset(int index) {
     if (index == 0) {
@@ -39,7 +40,9 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
   @override
   void initState() {
     super.initState();
-    _referenceTime = DateTime.now().subtract(Duration(hours: getHoursFromOffset(widget.localOffset), minutes: getMinutesFromOffset(widget.localOffset)));
+    _referenceTime = DateTime.now().subtract(Duration(
+        hours: getHoursFromOffset(widget.localOffset),
+        minutes: getMinutesFromOffset(widget.localOffset)));
 
     pageController.addListener(() {
       setState(() {
@@ -58,11 +61,12 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
     return getIt.get<TimeZoneDataStream>().get[index].name;
   }
 
-  int getMinutesFromOffset(int offset){
-    return (offset - (offset/3600).floor() * 3600)~/60;
+  int getMinutesFromOffset(int offset) {
+    return (offset - (offset / 3600).floor() * 3600) ~/ 60;
   }
-  int getHoursFromOffset(int offset){
-    return (offset/3600).floor();
+
+  int getHoursFromOffset(int offset) {
+    return (offset / 3600).floor();
   }
 
   @override
@@ -79,7 +83,9 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
                   controller: pageController,
                   itemBuilder: (context, position) {
                     return buildTimeZonePages(
-                        position, MediaQuery.of(context).size.height, MediaQuery.of(context).size.width);
+                        position,
+                        MediaQuery.of(context).size.height,
+                        MediaQuery.of(context).size.width);
                   }),
               Align(
                 alignment: Alignment.bottomCenter,
@@ -92,8 +98,7 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
                 ),
               ),
             ]);
-          }
-      ),
+          }),
     );
   }
 
@@ -104,9 +109,10 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
       initialEntryMode: TimePickerEntryMode.dial,
     );
     if (newTime != null) {
-
-      int utcHour = newTime.hour - getHoursFromOffset(getOffset(currentPage.round()));
-      int utcMinute = newTime.minute - getMinutesFromOffset(currentPage.round());
+      int utcHour =
+          newTime.hour - getHoursFromOffset(getOffset(currentPage.round()));
+      int utcMinute =
+          newTime.minute - getMinutesFromOffset(currentPage.round());
       if (utcMinute >= 60) {
         utcHour++;
         utcMinute -= 60;
@@ -116,30 +122,33 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
       }
       setState(() {
         _referenceTime = _referenceTime.setTimeOfDay(
-            utcHour.rollOver(max: 24),
-            utcMinute.rollOver(max: 60));
+            utcHour.rollOver(max: 24), utcMinute.rollOver(max: 60));
       });
     }
   }
 
   Widget buildTimeZonePages(int index, double height, double width) {
-
     Matrix4 matrix = Matrix4.identity();
 
     double currentScale = 0.9, scaleFactor = 0.9;
 
-    if (index == currentPage.floor()) { //current slide
+    if (index == currentPage.floor()) {
+      //current slide
       currentScale = 1 - (currentPage - index) * (1 - scaleFactor);
-    } else if(index == currentPage.floor() + 1) { //next one
-      currentScale = scaleFactor + (currentPage - index + 1) * (1 - scaleFactor);
-    } else if(index == currentPage.floor() - 1) { //previous one
+    } else if (index == currentPage.floor() + 1) {
+      //next one
+      currentScale =
+          scaleFactor + (currentPage - index + 1) * (1 - scaleFactor);
+    } else if (index == currentPage.floor() - 1) {
+      //previous one
       currentScale = 1 - (currentPage - index) * (1 - scaleFactor);
     }
 
     //set the scale and make it go a bit down to account for the size diff
-    matrix = Matrix4.diagonal3Values(1, currentScale, 1)..setTranslationRaw(0, height * (1-currentScale)/2, 0);
+    matrix = Matrix4.diagonal3Values(1, currentScale, 1)
+      ..setTranslationRaw(0, height * (1 - currentScale) / 2, 0);
 
-    if (index == numPages){
+    if (index == numPages) {
       return promptAddNewTimeZonePage(matrix);
     }
     return Transform(
@@ -159,13 +168,18 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
                 height: 60,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children:[
-                    if (index == 0) 
-                    ...[Container()], //so the indicator only appears on the right
-                    if (index != 0)
-                      ...[OtherPageIndicator(text: getNameByIndex(index - 1), flipped: false)],
-                    if (index != numPages - 1)
-                      ...[OtherPageIndicator(text: getNameByIndex(index + 1), flipped: true)],
+                  children: [
+                    if (index == 0) ...[
+                      Container()
+                    ], //so the indicator only appears on the right
+                    if (index != 0) ...[
+                      OtherPageIndicator(
+                          text: getNameByIndex(index - 1), flipped: false)
+                    ],
+                    if (index != numPages - 1) ...[
+                      OtherPageIndicator(
+                          text: getNameByIndex(index + 1), flipped: true)
+                    ],
                   ],
                 ),
               ),
@@ -180,25 +194,28 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
                     builder: (context, snap) {
                       return OutlinedButton(
                         onPressed: () => selectTime(),
-                        child: Text(getDisplayText(index),
+                        child: Text(
+                          getDisplayText(index),
                           style: const TextStyle(
                               fontSize: 160,
                               color: Colors.black,
                               fontFamily: 'Fokus',
-                              letterSpacing: 5
-                          ),
+                              letterSpacing: 5),
                         ),
                       );
                     },
                   ),
-                  Text(getIt.get<FormatStream>().get == Format.f24h ? ""
-                      : getTimeDisplay(getOffset(index)).hour < 12 ? "AM" : "PM",
+                  Text(
+                    getIt.get<FormatStream>().get == Format.f24h
+                        ? ""
+                        : getTimeDisplay(getOffset(index)).hour < 12
+                            ? "AM"
+                            : "PM",
                     style: const TextStyle(
                         fontSize: 30,
                         color: Colors.black,
                         fontFamily: 'Fokus',
-                        letterSpacing: 1
-                    ),
+                        letterSpacing: 1),
                   ),
                 ],
               ),
@@ -208,9 +225,10 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.location_on, size:50),
+                  const Icon(Icons.location_on, size: 50),
                   Flexible(
-                    child: Text(getNameByIndex(index),
+                    child: Text(
+                      getNameByIndex(index),
                       textAlign: TextAlign.center,
                       maxLines: 4,
                       overflow: TextOverflow.ellipsis,
@@ -229,67 +247,66 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
     );
   }
 
-  Widget promptAddNewTimeZonePage(Matrix4 matrix){
+  Widget promptAddNewTimeZonePage(Matrix4 matrix) {
     return Transform(
       transform: matrix,
-      child: Stack(
-          children:[
-            ElevatedButton(
-                onPressed: () {
-                  goToInputNewLocationPage();
-                },
-                style: ButtonStyle(
-                  backgroundColor: MaterialStateColor.resolveWith((states) => Colors.white) ,
-                ),
-                child: Container(
-                  color: Colors.white,
-                )
+      child: Stack(children: [
+        ElevatedButton(
+            onPressed: () {
+              goToInputNewLocationPage();
+            },
+            style: ButtonStyle(
+              backgroundColor:
+                  MaterialStateColor.resolveWith((states) => Colors.white),
             ),
-            Center(
-              child: SizedBox(
-                height: 250,
-                child: Column(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outlined),
-                      iconSize: 150,
-                      color: Colors.blue,
-                      onPressed: (){
-                        goToInputNewLocationPage();
-                      },
-                    ),
-                    TextButton(onPressed: (){
+            child: Container(
+              color: Colors.white,
+            )),
+        Center(
+          child: SizedBox(
+            height: 250,
+            child: Column(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outlined),
+                  iconSize: 150,
+                  color: Colors.blue,
+                  onPressed: () {
+                    goToInputNewLocationPage();
+                  },
+                ),
+                TextButton(
+                    onPressed: () {
                       goToInputNewLocationPage();
                     },
-                        child: const Text("Add new location",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w400,
-                            fontSize: 30,
-                            color: Colors.black,
-                          ),
-                        )
-                    )
-                  ],
-                ),
-              ),
+                    child: const Text(
+                      "Add new location",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 30,
+                        color: Colors.black,
+                      ),
+                    ))
+              ],
             ),
-          ]
-      ),
+          ),
+        ),
+      ]),
     );
   }
 
-  void goToInputNewLocationPage(){
+  void goToInputNewLocationPage() {
     Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return InputNewLocationPage();
+      return const InputNewLocationPage();
     }));
   }
 
   String getDisplayText(int index) {
     DateTime timeToDisplay = getTimeDisplay(getOffset(index));
     Format format = getIt.get<FormatStream>().get;
-    int hour = timeToDisplay.hour > 12 ?
-    timeToDisplay.hour % (format == Format.f12h ? 12 : 24) :
-    timeToDisplay.hour;
+    int hour = timeToDisplay.hour > 12
+        ? timeToDisplay.hour % (format == Format.f12h ? 12 : 24)
+        : timeToDisplay.hour;
     int minute = timeToDisplay.minute;
     return "${hour.getFormatForTimeDisplay()}:${minute.getFormatForTimeDisplay()}";
   }

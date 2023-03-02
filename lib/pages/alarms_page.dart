@@ -10,6 +10,17 @@ class AlarmsScreen extends StatefulWidget {
 class _AlarmsScreenState extends State<AlarmsScreen> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Stack(
+      children: const [
+        Placeholder(),
+        Center(
+          child: Text(
+            "Comming soon",
+            style:
+                TextStyle(fontFamily: 'Fokus', fontSize: 48, letterSpacing: 3),
+          ),
+        ),
+      ],
+    );
   }
 }
