@@ -4,7 +4,7 @@ import 'package:TimeConvertor/data/time_zone_data.dart';
 import 'package:TimeConvertor/main.dart';
 import 'package:TimeConvertor/services/sql_database.dart';
 import 'package:TimeConvertor/utils/consts.dart';
-import 'package:TimeConvertor/services/get_from_timezonedb.dart';
+import 'package:TimeConvertor/services/get_tz_from_api.dart';
 import 'package:TimeConvertor/utils/streams.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
@@ -85,7 +85,7 @@ class _LoadingPageState extends State<LoadingPage> {
       });
 
       String zone = await FlutterNativeTimezone.getLocalTimezone();
-      int offset = await GetFromTimeZoneDB.getUTCOffsetByZone(zone);
+      int offset = await GetTZFromAPI.getUTCOffsetByZone(zone);
 
       saveLocalOffset(offset);
 
@@ -106,7 +106,7 @@ class _LoadingPageState extends State<LoadingPage> {
     for (int i = 0; i < data.length; i++) {
       TimeZoneData zoneData = data.elementAt(i);
       if (zoneData.zoneName != "") {
-        requests[i] = GetFromTimeZoneDB.getUTCOffsetByZone(zoneData.zoneName);
+        requests[i] = GetTZFromAPI.getUTCOffsetByZone(zoneData.zoneName);
       }
     }
 

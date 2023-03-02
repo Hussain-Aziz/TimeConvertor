@@ -9,8 +9,8 @@ const int maxRequestRetrys = 10;
 
 final dio = Dio();
 
-class GetFromTimeZoneDB {
-  static Future<TimeZoneData> getZoneDataFromPosition(
+class GetTZFromAPI {
+  static Future<Map<String, dynamic>> getZoneDataFromPosition(
       double latitude, double longitude) async {
     Map<String, String> queryParams = {
       'key': APIKeys.timeZoneDBAPI,
@@ -20,7 +20,7 @@ class GetFromTimeZoneDB {
       'lng': longitude.toString(),
     };
 
-    TimeZoneData? responseData;
+    Map<String, dynamic>? responseData;
 
     int trys = 0;
 
@@ -31,11 +31,7 @@ class GetFromTimeZoneDB {
             'http://api.timezonedb.com/v2.1/get-time-zone',
             queryParameters: queryParams);
 
-        var responseMap = response.data as Map<String, dynamic>;
-
-        responseData = TimeZoneData.empty();
-        responseData.offset = responseMap['gmtOffset'];
-        responseData.zoneName = responseMap['zoneName'];
+        responseData = response.data as Map<String, dynamic>;
 
         break;
       } on DioError catch (e) {
