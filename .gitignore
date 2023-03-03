@@ -48,3 +48,4 @@ analysis_options.yaml
 .vscode/settings.json
 *.env
 lib/env/env.g.dart
+android/app/src/main/AndroidManifest.xml
