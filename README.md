@@ -9,10 +9,11 @@ An app to make time conversions between timezones as easy as possible
 - Allows you to change the time that being converted and see that change across all the added time zones (does not have to be current time)
 
 ## Demonstration
-#### Change any time between zones
+- #### [Full app demonstration](https://youtu.be/x7BcaOTMKVU)
+- #### Change any time between zones
 ![](assets/change_between_zones_example.gif)  
 
-#### Add new location from position
+- #### Add new location from position
 ![](assets/add_location_example.gif)
 
 ## To Build
