@@ -17,6 +17,15 @@ abstract class Stream<T> {
 
 class FormatStream extends Stream<Format> {}
 
+// the idea behind this is i need a way to rebuild ui and force
+// reference time to change in the page view on update time button press
+// in the drawer
+class UpdateTimeStream extends Stream<int> {
+  void update() {
+    set(DateTime.now().millisecondsSinceEpoch);
+  }
+}
+
 class TimeZoneDataStream extends Stream<List<TimeZoneData>> {
   ///adds the new tiemzone data to list and resets id to be the correct one
   ///returns the correct id

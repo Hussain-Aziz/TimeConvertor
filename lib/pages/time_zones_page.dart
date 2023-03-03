@@ -37,13 +37,16 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
     return getIt.get<TimeZoneDataStream>().get[index].offset;
   }
 
-  @override
-  void initState() {
-    super.initState();
+  void updateReferenceTime() {
     _referenceTime = DateTime.now().subtract(Duration(
         hours: getHoursFromOffset(widget.localOffset),
         minutes: getMinutesFromOffset(widget.localOffset)));
+  }
 
+  @override
+  void initState() {
+    super.initState();
+    updateReferenceTime();
     pageController.addListener(() {
       setState(() {
         currentPage = pageController.page!;
@@ -186,39 +189,48 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
             ),
             Expanded(
               flex: 5,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  StreamBuilder(
-                    stream: getIt.get<FormatStream>().stream,
-                    builder: (context, snap) {
-                      return OutlinedButton(
-                        onPressed: () => selectTime(),
-                        child: Text(
-                          getDisplayText(index),
+              child: StreamBuilder(
+                  stream: getIt.get<FormatStream>().stream,
+                  builder: (context, snapshot) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => selectTime(),
+                          child: StreamBuilder(
+                              stream: getIt.get<UpdateTimeStream>().stream,
+                              builder: (context, snapshot) {
+                                final now =
+                                    DateTime.now().millisecondsSinceEpoch;
+                                final data = getIt.get<UpdateTimeStream>().get;
+                                if ((now - data) < 2000) {
+                                  updateReferenceTime();
+                                }
+                                return Text(
+                                  getDisplayText(index),
+                                  style: const TextStyle(
+                                      fontSize: 160,
+                                      color: Colors.black,
+                                      fontFamily: 'Fokus',
+                                      letterSpacing: 5),
+                                );
+                              }),
+                        ),
+                        Text(
+                          getIt.get<FormatStream>().get == Format.f24h
+                              ? ""
+                              : getTimeDisplay(getOffset(index)).hour < 12
+                                  ? "AM"
+                                  : "PM",
                           style: const TextStyle(
-                              fontSize: 160,
+                              fontSize: 30,
                               color: Colors.black,
                               fontFamily: 'Fokus',
-                              letterSpacing: 5),
+                              letterSpacing: 1),
                         ),
-                      );
-                    },
-                  ),
-                  Text(
-                    getIt.get<FormatStream>().get == Format.f24h
-                        ? ""
-                        : getTimeDisplay(getOffset(index)).hour < 12
-                            ? "AM"
-                            : "PM",
-                    style: const TextStyle(
-                        fontSize: 30,
-                        color: Colors.black,
-                        fontFamily: 'Fokus',
-                        letterSpacing: 1),
-                  ),
-                ],
-              ),
+                      ],
+                    );
+                  }),
             ),
             Flexible(
               flex: 2,
