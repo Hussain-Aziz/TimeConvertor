@@ -115,7 +115,7 @@ class _TimeZonesScreenState extends State<TimeZonesScreen> {
       int utcHour =
           newTime.hour - getHoursFromOffset(getOffset(currentPage.round()));
       int utcMinute =
-          newTime.minute - getMinutesFromOffset(currentPage.round());
+          newTime.minute - getMinutesFromOffset(getOffset(currentPage.round()));
       if (utcMinute >= 60) {
         utcHour++;
         utcMinute -= 60;
