@@ -8,7 +8,7 @@ An app to make time conversions between timezones as easy as possible
 - It is aranged as swipable pages so you can easily see difference between zones
 - Allows you to change the time that being converted and see that change across all the added time zones (does not have to be current time)
 
-![](assets/change_example.gif) ![](assets/add_location_example.gif)
+![](assets/change_between_zones_example.gif) ![](assets/add_location_example.gif)
 
 ## To Build
 - Clone the repo
