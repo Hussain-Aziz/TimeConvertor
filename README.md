@@ -29,5 +29,9 @@ TIMEZONEDB_API={TimeZoneDB API Key}
 <meta-data android:name="com.google.android.geo.API_KEY"
             android:value="{Google Maps API Key}"/>
 ```
+- add this on line 12 in the file `ios/Runner/AppDelegate.swift`
+```swift
+GMSServices.provideAPIKey("{Google Maps API Key}")
+```
 - run `flutter pub run build_runner build` to generate `lib/env/env.g.dart`
 - run `flutter build`
