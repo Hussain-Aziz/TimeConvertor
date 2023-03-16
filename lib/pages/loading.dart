@@ -85,7 +85,7 @@ class _LoadingPageState extends State<LoadingPage> {
       });
 
       String zone = await FlutterNativeTimezone.getLocalTimezone();
-      int offset = await GetTZFromAPI.getUTCOffsetByZone(zone);
+      int offset = await GetTZFromAPI.getUTCOffsetByZoneFromTimeZoneDB(zone);
 
       saveLocalOffset(offset);
 
@@ -106,7 +106,7 @@ class _LoadingPageState extends State<LoadingPage> {
     for (int i = 0; i < data.length; i++) {
       TimeZoneData zoneData = data.elementAt(i);
       if (zoneData.zoneName != "") {
-        requests[i] = GetTZFromAPI.getUTCOffsetByZone(zoneData.zoneName);
+        requests[i] = GetTZFromAPI.getUTCOffsetByZoneFromWorldTimeAPI(zoneData.zoneName);
       }
     }
 

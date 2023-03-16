@@ -325,7 +325,7 @@ class _InputNewLocationPageState extends State<InputNewLocationPage> {
                     });
 
                     final zoneOffset =
-                        await GetTZFromAPI.getUTCOffsetByZone(value);
+                        await GetTZFromAPI.getUTCOffsetByZoneFromTimeZoneDB(value);
 
                     //if its not reset by something else, do the set state
                     if (isGettingFromDB) {

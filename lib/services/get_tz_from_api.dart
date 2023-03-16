@@ -1,4 +1,3 @@
-import 'package:TimeConvertor/data/time_zone_data.dart';
 import 'package:TimeConvertor/env/env.dart';
 import 'package:dio/dio.dart';
 
@@ -20,16 +19,51 @@ class GetTZFromAPI {
       'lng': longitude.toString(),
     };
 
+    return await getDataFromTimeZoneDB(queryParams);
+  }
+
+  static Future<int> getUTCOffsetByZoneFromTimeZoneDB(String zone) async {
+    if (zoneFixes.containsKey(zone)) {
+      zone = zoneFixes[zone]!;
+    }
+
+    Map<String, String> queryParams = {
+      'key': Env.timeZoneDBAPI,
+      'format': 'json',
+      'by': 'zone',
+      'zone': zone
+    };
+
+    var response = await getDataFromTimeZoneDB(queryParams);
+    return response['gmtOffset'];
+  }
+
+  static Future<int> getUTCOffsetByZoneFromWorldTimeAPI(String zone) async {
+    if (zoneFixes.containsKey(zone)) {
+      zone = zoneFixes[zone]!;
+    }
+
+    var response =
+        await getDataFromAPI('http://worldtimeapi.org/api/timezone/$zone');
+
+    return response['raw_offset'];
+  }
+
+    static Future<Map<String, dynamic>> getDataFromTimeZoneDB(
+      Map<String, String> queryParams) {
+    return getDataFromAPI('http://api.timezonedb.com/v2.1/get-time-zone',
+        queryParams: queryParams);
+  }
+
+  static Future<Map<String, dynamic>> getDataFromAPI(String uri,
+      {Map<String, String>? queryParams}) async {
     Map<String, dynamic>? responseData;
 
     int trys = 0;
-
     while (trys < maxRequestRetrys) {
       trys++;
       try {
-        Response response = await dio.get(
-            'http://api.timezonedb.com/v2.1/get-time-zone',
-            queryParameters: queryParams);
+        Response response = await dio.get(uri, queryParameters: queryParams);
 
         responseData = response.data as Map<String, dynamic>;
 
@@ -38,7 +72,7 @@ class GetTZFromAPI {
         switch (e.type) {
           case DioErrorType.badResponse:
             throw Exception(
-                "Could not get data of timezone because ${e.message}\nRequest response: ${e.response?.data['message']}\nQuery: $queryParams");
+                "Could not get data from $uri because ${e.message}\nRequest response: ${e.response?.data['message']}${queryParams != null ? "\nQuery: $queryParams" : ""}");
           case DioErrorType.connectionTimeout:
           case DioErrorType.connectionError:
           case DioErrorType.cancel:
@@ -46,7 +80,7 @@ class GetTZFromAPI {
           case DioErrorType.sendTimeout:
           case DioErrorType.unknown:
             //just wait and while loop will cause it to retry
-            await Future.delayed(const Duration(milliseconds: 500));
+            await Future.delayed(const Duration(milliseconds: 1000));
             break;
 
           default:
@@ -58,53 +92,7 @@ class GetTZFromAPI {
     if (responseData != null) {
       return responseData;
     } else {
-      throw Exception("Could not get zone data after 10 trys");
-    }
-  }
-
-  static Future<int> getUTCOffsetByZone(String zone) async {
-    if (zoneFixes.containsKey(zone)) {
-      zone = zoneFixes[zone]!;
-    }
-
-    int? offset;
-    int trys = 0;
-    while (trys < maxRequestRetrys) {
-      trys++;
-      try {
-        Response response =
-            await dio.get('http://worldtimeapi.org/api/timezone/$zone');
-
-        var responseMap = response.data as Map<String, dynamic>;
-
-        offset = responseMap['raw_offset'];
-
-        break;
-      } on DioError catch (e) {
-        switch (e.type) {
-          case DioErrorType.badResponse:
-            throw Exception(
-                "Could not get offset of timezone because ${e.message}\nzone was: $zone");
-          case DioErrorType.connectionTimeout:
-          case DioErrorType.connectionError:
-          case DioErrorType.cancel:
-          case DioErrorType.receiveTimeout:
-          case DioErrorType.sendTimeout:
-          case DioErrorType.unknown:
-            //just wait and the while loop will retry
-            await Future.delayed(const Duration(seconds: 1, milliseconds: 100));
-            break;
-
-          default:
-            rethrow;
-        }
-      }
-    }
-
-    if (offset != null) {
-      return offset;
-    } else {
-      throw Exception("Could not get offset after 10 trys");
+      throw Exception("Could not get data from $uri after 10 trys");
     }
   }
 

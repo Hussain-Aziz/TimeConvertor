@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:TimeConvertor/data/time_zone_data.dart';
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
